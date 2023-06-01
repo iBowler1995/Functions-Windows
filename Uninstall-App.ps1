@@ -8,34 +8,32 @@ function Uninstall-App {
 		.PARAMETER Argument
         This parameter is option and allows you to add extra arguments to the uninstall command
         .EXAMPLE
-        Uninstall-App -App 'Adobe Acrobat DC (64-bit)' <--- This will find and call the native uninstall command for the app
-        Uninstall-App -App 'Adobe Acrobat DC (64-bit)' -Argument '/qn' <--- This will find the native unisntall command, add the arguments, and invoke the command
+        Uninstall-App -Name 'Adobe Acrobat DC (64-bit)' <--- This will uninstall Adobe Acrobat
 		
 	#>
 
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingCmdletAliases', '', Scope='Function')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSPossibleIncorrectComparisonWithNull', '', Scope='Function')]
     [CmdletBinding()]
     param (
+
     [Parameter(Mandatory = $True)]
-    [String]$App,
-    [Parameter()]
-    [String]$Argument
+    [String]$Name
+    
 )
 $paths = 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
           'HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
-$Test = Get-ItemProperty $paths | where {$_.DisplayName -eq $App} | select -expand UninstallString
+$Test = Get-ItemProperty $paths | where {$_.DisplayName -like "*$Name*"}
+
 If ($Test -eq $Null){
-Write-Host "App not found."
-}
+
+    Write-Host "App not found."
+
+    }
 else{
-    Try {
 
-        $UninstallString = "$Test /quiet /norestart"
-
-    }
-    catch {
-
-
+    $App = Get-WmiObject -Class Win32_Product | ? {$_.Name -like "*$Name*"}
+    $App.Uninstall()
 
     }
-}
 }
